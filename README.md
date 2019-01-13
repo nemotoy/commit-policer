@@ -5,10 +5,11 @@
 ## reference
 
 * [Github Developers](https://developer.github.com/v3/)
+    * [PushEvent](https://developer.github.com/v3/activity/events/types/#pushevent)
     * [rate limit](https://developer.github.com/v3/#rate-limiting)
 
 * [go-github](https://github.com/google/go-github)
-  * [PushEvent](https://developer.github.com/v3/activity/events/types/#pushevent)
+
 
 ## API
 
