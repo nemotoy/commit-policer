@@ -1,15 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"net/http"
 	"os"
+
+	"github.com/google/go-github/github"
 )
 
 const (
 	headerRateLimit     = "X-RateLimit-Limit"
 	headerRateRemaining = "X-RateLimit-Remaining"
 	headerRateReset     = "X-RateLimit-Reset"
+)
+
+var (
+	userName = "nemotoy"
 )
 
 func main() {
@@ -21,13 +27,15 @@ func main() {
 
 func run() error {
 
-	client := &http.Client{}
+	// use package 'go-github'
+	client := github.NewClient(nil)
 
-	res, err := client.Get("https://api.github.com/users/nemotoy/events")
+	event, res, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
 	if err != nil {
 		return err
 	}
 
+	fmt.Printf("Event: %v\n", event[0])
 	fmt.Printf("%v\n", res.Header.Get(headerRateRemaining))
 
 	return nil
