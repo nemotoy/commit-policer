@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/google/go-github/github"
 )
@@ -15,7 +16,10 @@ const (
 )
 
 var (
-	userName = "nemotoy"
+	userName                  = "nemotoy"
+	jst                       = time.FixedZone("Asia/Tokyo", 9*60*60)
+	dayHour     time.Duration = 24
+	commitcount int
 )
 
 func main() {
@@ -27,16 +31,28 @@ func main() {
 
 func run() error {
 
-	// use package 'go-github'
+	// TODO: new goroutine
+	now := time.Now()
+
 	client := github.NewClient(nil)
 
-	event, res, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
+	events, _, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Event: %v\n", event[0])
-	fmt.Printf("%v\n", res.Header.Get(headerRateRemaining))
+	for _, event := range events {
+
+		eTime := event.CreatedAt.In(jst)
+		dur := now.Sub(eTime)
+		if dur < dayHour {
+			commitcount++
+		}
+	}
+
+	if commitcount == 0 {
+		fmt.Println("TODO: Remind!!!")
+	}
 
 	return nil
 }
