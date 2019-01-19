@@ -42,6 +42,8 @@ func run() error {
 		return err
 	}
 
+	fmt.Println(events, resp.Rate)
+
 	if resp.Rate.Remaining <= warningRateRemaining {
 		fmt.Printf("Rate remaining is warn %v", resp.Rate.Remaining)
 	}
