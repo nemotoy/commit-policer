@@ -1,13 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/google/go-github/github"
 )
 
 const (
@@ -35,40 +32,43 @@ func main() {
 func run() error {
 
 	// TODO: new goroutine
-	now := time.Now()
+	// now := time.Now()
 
-	client := github.NewClient(nil)
+	// client := github.NewClient(nil)
 
-	events, resp, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
-	if err != nil {
-		return err
-	}
+	// events, resp, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
+	// if err != nil {
+	// 	return err
+	// }
 
-	fmt.Println(events, resp.Rate)
+	// fmt.Println(events, resp.Rate)
 
-	if resp.Rate.Remaining <= warningRateRemaining {
-		fmt.Printf("Rate remaining is warn %v", resp.Rate.Remaining)
-	}
+	// if resp.Rate.Remaining <= warningRateRemaining {
+	// 	fmt.Printf("Rate remaining is warn %v", resp.Rate.Remaining)
+	// }
 
-	for _, event := range events {
+	// for _, event := range events {
 
-		eTime := event.CreatedAt.In(jst)
-		dur := now.Sub(eTime)
-		if dur < dayHour {
-			commitcount++
-		}
-	}
+	// 	eTime := event.CreatedAt.In(jst)
+	// 	dur := now.Sub(eTime)
+	// 	if dur < dayHour {
+	// 		commitcount++
+	// 	}
+	// }
 
-	if commitcount == 0 {
-		fmt.Println("TODO: Remind!!!")
-	}
+	// if commitcount == 0 {
+	// 	fmt.Println("TODO: Remind!!!")
+	// }
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, fmt.Sprintf("pong"))
 	})
-	http.ListenAndServe(port, mux)
+	err := http.ListenAndServe(port, mux)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
