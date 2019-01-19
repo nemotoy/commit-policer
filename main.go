@@ -16,10 +16,11 @@ const (
 )
 
 var (
-	userName                  = "nemotoy"
-	jst                       = time.FixedZone("Asia/Tokyo", 9*60*60)
-	dayHour     time.Duration = 24
-	commitcount int
+	userName                           = "nemotoy"
+	jst                                = time.FixedZone("Asia/Tokyo", 9*60*60)
+	dayHour              time.Duration = 24
+	commitcount          int
+	warningRateRemaining = 10
 )
 
 func main() {
@@ -36,9 +37,13 @@ func run() error {
 
 	client := github.NewClient(nil)
 
-	events, _, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
+	events, resp, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
 	if err != nil {
 		return err
+	}
+
+	if resp.Rate.Remaining <= warningRateRemaining {
+		fmt.Printf("Rate remaining is warn %v", resp.Rate.Remaining)
 	}
 
 	for _, event := range events {
