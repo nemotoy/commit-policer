@@ -16,5 +16,5 @@
 * 指定リポジトリのコミット全件取得  
 $ curl -is -H "Authorization: token {token}" https://api.github.com/repos/:user/:repo/commits
 
-* 指定ユーザーのイベント取得    
+* 指定ユーザーのイベント取得(Max 30 Events)
 $ curl -is https://api.github.com/users/:user/events
