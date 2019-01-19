@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -19,7 +20,7 @@ var (
 	dayHour              time.Duration = 24
 	commitcount          int
 	warningRateRemaining = 10
-	port                 = "9000"
+	// port                 = "8080"
 )
 
 func main() {
@@ -31,6 +32,10 @@ func main() {
 
 func run() error {
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
 	// TODO: new goroutine
 	// now := time.Now()
 
