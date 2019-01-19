@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/google/go-github/github"
 )
 
 const (
@@ -15,12 +18,11 @@ const (
 )
 
 var (
-	userName                           = "nemotoy"
-	jst                                = time.FixedZone("Asia/Tokyo", 9*60*60)
-	dayHour              time.Duration = 24
+	userName             = "nemotoy"
+	jst                  = time.FixedZone("Asia/Tokyo", 9*60*60)
+	dayHour              = 24 * time.Hour
 	commitcount          int
 	warningRateRemaining = 10
-	// port                 = "8080"
 )
 
 func main() {
@@ -36,41 +38,48 @@ func run() error {
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
+
 	// TODO: new goroutine
-	// now := time.Now()
+	now := time.Now()
 
-	// client := github.NewClient(nil)
+	client := github.NewClient(nil)
 
-	// events, resp, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
-	// if err != nil {
-	// 	return err
-	// }
+	events, resp, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	// fmt.Println(events, resp.Rate)
+	fmt.Println(resp.Rate)
 
-	// if resp.Rate.Remaining <= warningRateRemaining {
-	// 	fmt.Printf("Rate remaining is warn %v", resp.Rate.Remaining)
-	// }
+	if resp.Rate.Remaining <= warningRateRemaining {
+		fmt.Printf("Rate remaining is warn %v", resp.Rate.Remaining)
+	}
 
-	// for _, event := range events {
+	for _, event := range events {
 
-	// 	eTime := event.CreatedAt.In(jst)
-	// 	dur := now.Sub(eTime)
-	// 	if dur < dayHour {
-	// 		commitcount++
-	// 	}
-	// }
+		eventTime := event.CreatedAt.In(jst)
+		dur := now.Sub(eventTime)
+		// TODO: This calculation is not daily strictly. `within 24 hours`
+		if dayHour-dur >= 0 {
+			fmt.Printf("Event: %v, Dur: %v, Daily: %v\n", eventTime, dur, dayHour-dur)
+			commitcount++
+		}
+	}
 
-	// if commitcount == 0 {
-	// 	fmt.Println("TODO: Remind!!!")
-	// }
+	fmt.Printf("%v commits within 24 hours\n", commitcount)
+
+	if commitcount == 0 {
+		fmt.Println("TODO: Remind!!!")
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, fmt.Sprintf("pong"))
 	})
-	err := http.ListenAndServe(":"+port, mux)
+
+	err = http.ListenAndServe(":"+port, mux)
 	if err != nil {
 		return err
 	}
