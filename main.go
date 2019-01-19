@@ -19,7 +19,7 @@ var (
 	dayHour              time.Duration = 24
 	commitcount          int
 	warningRateRemaining = 10
-	port                 = ":9000"
+	port                 = "9000"
 )
 
 func main() {
@@ -65,7 +65,7 @@ func run() error {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, fmt.Sprintf("pong"))
 	})
-	err := http.ListenAndServe(port, mux)
+	err := http.ListenAndServe(":"+port, mux)
 	if err != nil {
 		return err
 	}
