@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -21,6 +22,7 @@ var (
 	dayHour              time.Duration = 24
 	commitcount          int
 	warningRateRemaining = 10
+	port                 = ":9000"
 )
 
 func main() {
@@ -60,6 +62,13 @@ func run() error {
 	if commitcount == 0 {
 		fmt.Println("TODO: Remind!!!")
 	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, fmt.Sprintf("pong"))
+	})
+	http.ListenAndServe(port, nil)
 
 	return nil
 }
