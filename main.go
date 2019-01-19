@@ -68,7 +68,7 @@ func run() error {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, fmt.Sprintf("pong"))
 	})
-	http.ListenAndServe(port, nil)
+	http.ListenAndServe(port, mux)
 
 	return nil
 }
