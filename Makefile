@@ -15,7 +15,7 @@ hinfo:
 	heroku apps:info
 
 hlog:
-	heroku logs
+	heroku logs --tail
 
 hpush:
 	git push heroku master
