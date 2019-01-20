@@ -39,7 +39,7 @@ func run() error {
 		log.Fatal("$PORT must be set")
 	}
 
-	// TODO: new goroutine
+	// // TODO: new goroutine
 	now := time.Now()
 
 	client := github.NewClient(nil)
@@ -79,10 +79,27 @@ func run() error {
 		fmt.Fprintf(w, fmt.Sprintf("pong"))
 	})
 
+	webhook := NewWebhookHandler()
+	mux.Handle("/webhook", webhook)
+
 	err = http.ListenAndServe(":"+port, mux)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// WebhookHandler ...
+type WebhookHandler struct {
+}
+
+// NewWebhookHandler ...
+func NewWebhookHandler() *WebhookHandler {
+	return &WebhookHandler{}
+}
+
+func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Fprintf(w, fmt.Sprintf("webhook"))
 }
