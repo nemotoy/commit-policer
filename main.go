@@ -11,19 +11,18 @@ import (
 	"github.com/google/go-github/github"
 )
 
-const (
-	headerRateLimit     = "X-RateLimit-Limit"
-	headerRateRemaining = "X-RateLimit-Remaining"
-	headerRateReset     = "X-RateLimit-Reset"
-)
-
 var (
 	userName             = "nemotoy"
 	jst                  = time.FixedZone("Asia/Tokyo", 9*60*60)
 	dayHour              = 24 * time.Hour
 	commitcount          int
 	warningRateRemaining = 10
+	interval             = 3 * time.Second
 )
+
+type client struct {
+	GitCli *github.Client
+}
 
 func main() {
 	if err := run(); err != nil {
@@ -39,39 +38,14 @@ func run() error {
 		log.Fatal("$PORT must be set")
 	}
 
-	// // TODO: new goroutine
-	now := time.Now()
-
-	client := github.NewClient(nil)
-
-	events, resp, err := client.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	fmt.Println(resp.Rate)
-
-	if resp.Rate.Remaining <= warningRateRemaining {
-		fmt.Printf("Rate remaining is warn %v", resp.Rate.Remaining)
+	client := &client{
+		GitCli: github.NewClient(nil),
 	}
 
-	for _, event := range events {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		eventTime := event.CreatedAt.In(jst)
-		dur := now.Sub(eventTime)
-		// TODO: This calculation is not daily strictly. `within 24 hours`
-		if dayHour-dur >= 0 {
-			fmt.Printf("Event: %v, Dur: %v, Daily: %v\n", eventTime, dur, dayHour-dur)
-			commitcount++
-		}
-	}
-
-	fmt.Printf("%v commits within 24 hours\n", commitcount)
-
-	if commitcount == 0 {
-		fmt.Println("TODO: Remind!!!")
-	}
+	client.Watcher(ctx)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +56,7 @@ func run() error {
 	webhook := NewWebhookHandler()
 	mux.Handle("/webhook", webhook)
 
-	err = http.ListenAndServe(":"+port, mux)
+	err := http.ListenAndServe(":"+port, mux)
 	if err != nil {
 		return err
 	}
@@ -102,4 +76,62 @@ func NewWebhookHandler() *WebhookHandler {
 func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, fmt.Sprintf("webhook"))
+}
+
+func (c *client) Watcher(ctx context.Context) {
+
+	t := time.NewTicker(interval)
+
+	for {
+		select {
+		case <-t.C:
+			err := c.CommitSend()
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+
+}
+
+func (c *client) CommitSend() error {
+
+	now := time.Now()
+
+	events, resp, err := c.GitCli.Activity.ListEventsPerformedByUser(context.Background(), userName, true, nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	fmt.Println(resp.Rate)
+
+	if resp.Rate.Remaining <= warningRateRemaining {
+		fmt.Printf("Rate remaining is warn %v", resp.Rate.Remaining)
+	}
+
+	for _, event := range events {
+
+		eventTime := event.CreatedAt.In(jst)
+		dur := now.Sub(eventTime)
+		// TODO: This calculation is not daily strictly. `within 24 hours`.
+		log.Printf("Now: %v, Event: %v, Dur: %v, Daily: %v\n", now, eventTime, dur, dayHour-dur)
+
+		if dayHour-dur >= 0 {
+			fmt.Printf("Event: %v, Dur: %v, Daily: %v\n", eventTime, dur, dayHour-dur)
+			commitcount++
+		}
+	}
+
+	fmt.Printf("%v commits within 24 hours\n", commitcount)
+
+	if commitcount == 0 {
+		fmt.Println("TODO: Remind!!!")
+		// TODO: send to LINE
+	}
+
+	return nil
 }
