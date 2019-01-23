@@ -1,6 +1,7 @@
 package main
 
 import (
+	"commit-policer/handler"
 	"context"
 	"fmt"
 	"log"
@@ -53,7 +54,7 @@ func run() error {
 		fmt.Fprintf(w, fmt.Sprintf("pong"))
 	})
 
-	webhook := NewWebhookHandler()
+	webhook := handler.NewWebhookHandler()
 	mux.Handle("/webhook", webhook)
 
 	err := http.ListenAndServe(":"+port, mux)
@@ -62,20 +63,6 @@ func run() error {
 	}
 
 	return nil
-}
-
-// WebhookHandler ...
-type WebhookHandler struct {
-}
-
-// NewWebhookHandler ...
-func NewWebhookHandler() *WebhookHandler {
-	return &WebhookHandler{}
-}
-
-func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Fprintf(w, fmt.Sprintf("webhook"))
 }
 
 func (c *client) Watcher(ctx context.Context) {
