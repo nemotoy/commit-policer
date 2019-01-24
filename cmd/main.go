@@ -1,13 +1,14 @@
 package main
 
 import (
-	"commit-policer/handler"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/nemotoy/commit-policer/handler"
 
 	"github.com/google/go-github/github"
 )
