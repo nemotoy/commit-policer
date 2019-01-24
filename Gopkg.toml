@@ -35,6 +35,6 @@
 
 [metadata.heroku]
   root-package = "github.com/nemotoy/commit-policer"
-  # go-version = "go1.9.1"
-  install = [ ".", "./cmd/..." ]
+  go-version = "1.9.0"
+  install = [ "./..." ]
   ensure = "true"
