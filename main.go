@@ -19,7 +19,7 @@ var (
 	dayHour              = 24 * time.Hour
 	commitcount          int
 	warningRateRemaining = 10
-	interval             = 1 * time.Hour
+	interval             = 10 * time.Minute
 )
 
 type client struct {
