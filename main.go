@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,11 +21,12 @@ var (
 	dayHour              = 24 * time.Hour
 	commitcount          int
 	warningRateRemaining = 10
-	interval             = 10 * time.Minute
+	interval             = 5 * time.Minute
 )
 
 type client struct {
-	GitCli *github.Client
+	GitCli  *github.Client
+	HttpCli *http.Client
 }
 
 func main() {
@@ -40,8 +43,11 @@ func run() error {
 		log.Fatal("$PORT must be set")
 	}
 
+	httpCli := &http.Client{}
+
 	client := &client{
-		GitCli: github.NewClient(nil),
+		GitCli:  github.NewClient(nil),
+		HttpCli: httpCli,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -106,15 +112,33 @@ func (c *client) CommitSend() error {
 		eventTime := event.CreatedAt.In(jst)
 		dur := now.Sub(eventTime)
 		// TODO: This calculation is not daily strictly. `within 24 hours`.
-		log.Printf("Now: %v, Event: %v, Dur: %v, Daily: %v\n", now, eventTime, dur, dayHour-dur)
+		// log.Printf("Now: %v, Event: %v, Dur: %v, Daily: %v\n", now, eventTime, dur, dayHour-dur)
 
 		if dayHour-dur >= 0 {
-			fmt.Printf("Event: %v, Dur: %v, Daily: %v\n", eventTime, dur, dayHour-dur)
 			commitcount++
 		}
 	}
 
 	fmt.Printf("%v commits within 24 hours\n", commitcount)
+
+	body, err := json.Marshal(events)
+	if err != nil {
+		fmt.Errorf("Failed to marshal. error: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", "https://hooks.slack.com/services/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", bytes.NewBuffer(body))
+	if err != nil {
+		fmt.Errorf("Failed to create request. error: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	httpResp, err := c.HttpCli.Do(req)
+	if err != nil {
+		fmt.Errorf("Failed to request. error: %v", err)
+	}
+
+	fmt.Printf("Success to request.", httpResp)
 
 	if commitcount == 0 {
 		fmt.Println("TODO: Remind!!!")
