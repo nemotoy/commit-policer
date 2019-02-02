@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -121,12 +120,8 @@ func (c *client) CommitSend() error {
 
 	fmt.Printf("%v commits within 24 hours\n", commitcount)
 
-	body, err := json.Marshal(events)
-	if err != nil {
-		fmt.Errorf("Failed to marshal. error: %v", err)
-	}
-
-	req, err := http.NewRequest("POST", "https://hooks.slack.com/services/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", bytes.NewBuffer(body))
+	sampleText := `{"text":"This is a line of text.\nAnd this is another one."}`
+	req, err := http.NewRequest("POST", "https://hooks.slack.com/services/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", bytes.NewBuffer([]byte(sampleText)))
 	if err != nil {
 		fmt.Errorf("Failed to create request. error: %v", err)
 	}
